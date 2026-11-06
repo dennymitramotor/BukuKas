@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buku Kas Harian Mobile</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Hide scrollbar for clean mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex justify-center pb-12">
+
+    <!-- Container HP / Mobile Wrapper -->
+    <div class="w-full max-w-md bg-slate-50 min-h-screen flex flex-col shadow-xl relative border-x border-slate-200">
+        
+        <!-- Header Top Bar -->
+        <header class="bg-gradient-to-r from-emerald-700 to-teal-800 text-white p-4 sticky top-0 z-30 shadow-md">
+            <div class="flex justify-between items-center mb-1">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid me-1 fa-book-bookmark text-emerald-300 text-xl"></i>
+                    <h1 class="font-bold text-lg tracking-tight">Buku Kas Harian</h1>
+                </div>
+                <button onclick="openHistoryModal()" class="text-xs bg-emerald-900/50 hover:bg-emerald-900/80 px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-emerald-500/30 transition">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Riwayat
+                </button>
+            </div>
+            <!-- Dynamic Date Picker Input Header -->
+            <div class="flex justify-between items-center text-xs text-emerald-100 mt-2 pt-2 border-t border-emerald-600/50">
+                <div class="flex items-center gap-1.5 bg-emerald-900/40 px-2.5 py-1.5 rounded-lg border border-emerald-500/30">
+                    <i class="fa-regular fa-calendar-alt text-emerald-300"></i>
+                    <input type="date" id="selectedDate" onchange="changeDate(this.value)" 
+                           class="bg-transparent text-white font-semibold text-xs focus:outline-none cursor-pointer">
+                </div>
+                <span class="text-[11px] text-emerald-200">Pilih tanggal untuk melihat/edit kas</span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-3 space-y-4">
+
+            <!-- Card Ringkasan Saldo / Kas Header -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 space-y-3">
+                <!-- Input Manual Saldo Awal -->
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+                    <div class="flex flex-col">
+                        <label for="inputSaldoAwal" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Saldo Awal Hari Ini</label>
+                        <span class="text-[9px] text-slate-400">Diisi manual / otomatis dari saldo kemarin</span>
+                    </div>
+                    <div class="w-36">
+                        <input type="text" id="inputSaldoAwal" placeholder="0" oninput="formatInputRupiah(this); handleSaldoAwalChange();"
+                               class="w-full text-right text-xs px-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold text-slate-800">
+                    </div>
+                </div>
+
+                <!-- Grid Pemasukan Breakdown -->
+                <div class="grid grid-cols-3 gap-2 text-center py-1 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <div class="p-1">
+                        <span class="block text-[10px] uppercase font-semibold text-emerald-700">Cash</span>
+                        <span id="displayTotalCash" class="text-xs font-bold text-emerald-900">Rp 0</span>
+                    </div>
+                    <div class="p-1 border-x border-slate-200">
+                        <span class="block text-[10px] uppercase font-semibold text-blue-700">Debit</span>
+                        <span id="displayTotalDebit" class="text-xs font-bold text-blue-900">Rp 0</span>
+                    </div>
+                    <div class="p-1">
+                        <span class="block text-[10px] uppercase font-semibold text-purple-700">QRIS</span>
+                        <span id="displayTotalQRIS" class="text-xs font-bold text-purple-900">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Arus Kas -->
+                <div class="space-y-1.5 text-xs pt-1">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Total Pemasukan</span>
+                        <span id="displayTotalPemasukan" class="font-semibold text-emerald-600">+ Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Total Pengeluaran</span>
+                        <span id="displayTotalPengeluaran" class="font-semibold text-rose-600">- Rp 0</span>
+                    </div>
+                    <div class="flex justify-between font-medium text-slate-700 pt-1 border-t border-dashed border-slate-200">
+                        <span>Saldo Kas (Masuk - Keluar)</span>
+                        <span id="displaySaldoKas" class="font-bold text-slate-800">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between font-medium text-slate-700">
+                        <span>Total Saldo (Awal + Kas)</span>
+                        <span id="displayTotalSaldo" class="font-bold text-slate-800">Rp 0</span>
+                    </div>
+
+                    <!-- Input Manual Setoran Hari Ini & Tombol WA -->
+                    <div class="bg-amber-50/80 p-2.5 rounded-xl border border-amber-200/80 my-2 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex flex-col">
+                                <label for="inputSetoran" class="text-[11px] font-semibold text-amber-900">Setoran Hari Ini (Manual)</label>
+                                <span class="text-[9px] text-amber-700">Nominal yang ditransfer/disetor</span>
+                            </div>
+                            <div class="w-32">
+                                <input type="text" id="inputSetoran" placeholder="0" oninput="formatInputRupiah(this); updateCalculations();"
+                                       class="w-full text-right text-xs px-2 py-1 bg-white border border-amber-300 rounded focus:outline-none focus:ring-1 focus:ring-amber-500 font-semibold">
+                            </div>
+                        </div>
+                        <button onclick="sendToWhatsApp()" 
+                                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition active:scale-95">
+                            <i class="fa-brands fa-whatsapp text-sm text-emerald-200"></i> Kirim Laporan via WhatsApp
+                        </button>
+                    </div>
+
+                    <!-- Final Calculated Saldo Akhir -->
+                    <div class="flex justify-between items-center bg-emerald-600 text-white p-3 rounded-xl shadow-sm mt-2">
+                        <div>
+                            <span class="block text-[10px] uppercase font-semibold text-emerald-100 tracking-wider">Saldo Akhir</span>
+                            <span class="text-[9px] text-emerald-200 leading-none block">(Saldo Awal + Masuk - QRIS - Debit - Setoran)</span>
+                        </div>
+                        <span id="displaySaldoAkhir" class="text-lg font-extrabold">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Tombol Tambah Transaksi -->
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="openFormModal('pemasukan')" 
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-3 rounded-xl font-medium text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95">
+                    <i class="fa-solid fa-circle-plus text-base"></i> + Pemasukan
+                </button>
+                <button onclick="openFormModal('pengeluaran')" 
+                        class="bg-rose-600 hover:bg-rose-700 text-white py-2.5 px-3 rounded-xl font-medium text-xs flex items-center justify-center gap-2 shadow-sm transition active:scale-95">
+                    <i class="fa-solid fa-circle-minus text-base"></i> + Pengeluaran
+                </button>
+            </div>
+
+            <!-- Filter Tab Transaksi -->
+            <div class="flex bg-slate-200/70 p-1 rounded-xl text-xs font-semibold text-slate-600">
+                <button id="tabAll" onclick="switchTab('all')" class="flex-1 py-1.5 rounded-lg bg-white shadow-sm text-slate-800">Semua</button>
+                <button id="tabMasuk" onclick="switchTab('masuk')" class="flex-1 py-1.5 rounded-lg">Pemasukan</button>
+                <button id="tabKeluar" onclick="switchTab('keluar')" class="flex-1 py-1.5 rounded-lg">Pengeluaran</button>
+            </div>
+
+            <!-- List / Table Transaksi -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                <div class="p-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                    <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wide">Daftar Transaksi</h2>
+                    <span id="txCount" class="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-semibold">0 transaksi</span>
+                </div>
+
+                <!-- Container Transaksi -->
+                <div id="transactionList" class="divide-y divide-slate-100 max-h-80 overflow-y-auto no-scrollbar">
+                    <!-- Dynamic Items will be rendered here -->
+                </div>
+            </div>
+
+    <!-- Modal Form Input / Edit Transaksi -->
+    <div id="formModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+        <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl animate-slide-up">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                <h3 id="modalTitle" class="font-bold text-slate-800 text-base">Tambah Transaksi</h3>
+                <button onclick="closeFormModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="txForm" onsubmit="handleSaveTransaction(event)" class="space-y-3">
+                <input type="hidden" id="txType" value="pemasukan">
+                <input type="hidden" id="editingTxId" value="">
+
+                <!-- Input Pemasukan Fields -->
+                <div id="pemasukanFields" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Metode Pembayaran</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="payType" value="Cash" checked class="peer sr-only">
+                                <div class="p-2 text-center text-xs font-medium border rounded-xl border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition">
+                                    <i class="fa-solid fa-money-bill-wave block text-sm mb-1"></i> Cash
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="payType" value="Debit" class="peer sr-only">
+                                <div class="p-2 text-center text-xs font-medium border rounded-xl border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 transition">
+                                    <i class="fa-solid fa-credit-card block text-sm mb-1"></i> Debit
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="payType" value="QRIS" class="peer sr-only">
+                                <div class="p-2 text-center text-xs font-medium border rounded-xl border-slate-200 peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-700 transition">
+                                    <i class="fa-solid fa-qrcode block text-sm mb-1"></i> QRIS
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">No. Transaksi / Struk (Opsional)</label>
+                        <input type="text" id="inputNoTrx" placeholder="Contoh: TRX-001" 
+                               class="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none uppercase">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nominal Transaksi (Rp)</label>
+                        <input type="text" id="inputNominalPemasukan" placeholder="0" oninput="formatInputRupiah(this)"
+                               class="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-bold text-slate-800">
+                    </div>
+                </div>
+
+                <!-- Input Pengeluaran Fields -->
+                <div id="pengeluaranFields" class="space-y-3 hidden">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan Pengeluaran</label>
+                        <input type="text" id="inputKeteranganPengeluaran" placeholder="Contoh: Beli Token Listrik, Plastik, dll." 
+                               class="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none uppercase">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Nominal (Rp)</label>
+                        <input type="text" id="inputNominalPengeluaran" placeholder="0" oninput="formatInputRupiah(this)"
+                               class="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none font-bold text-slate-800">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="btnSubmitForm" 
+                            class="w-full bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md hover:bg-emerald-700 transition">
+                        Simpan Transaksi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Riwayat Tutup Kas -->
+    <div id="historyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-4 shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-3">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i> Riwayat Tutup Kas Harian
+                </h3>
+                <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div id="historyList" class="flex-1 overflow-y-auto space-y-2 no-scrollbar pr-1">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-full shadow-lg hidden flex items-center gap-2 border border-slate-700">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toastMessage">Pesan Notifikasi</span>
+    </div>
+
+    <!-- JavaScript App Engine -->
+    <script>
+        // --- DATA STATE STRUCTURE PER TANGGAL ---
+        let currentSelectedDate = getTodayString();
+        let globalStorage = {}; 
+        // Format globalStorage: { "YYYY-MM-DD": { saldoAwal: 0, setoranHariIni: 0, transactions: [] } }
+        let historyData = [];
+
+        let activeTab = 'all';
+
+        function getTodayString() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function getCurrentDayState() {
+            if (!globalStorage[currentSelectedDate]) {
+                // Auto calculate default saldo awal from previous day's saldo akhir if available
+                let prevSaldoAkhir = getPreviousDaySaldoAkhir(currentSelectedDate);
+                globalStorage[currentSelectedDate] = {
+                    saldoAwal: prevSaldoAkhir,
+                    setoranHariIni: 0,
+                    transactions: []
+                };
+            }
+            return globalStorage[currentSelectedDate];
+        }
+
+        function getPreviousDaySaldoAkhir(dateStr) {
+            const dates = Object.keys(globalStorage).sort();
+            const prevDates = dates.filter(d => d < dateStr);
+            if (prevDates.length > 0) {
+                const lastDate = prevDates[prevDates.length - 1];
+                const dayData = globalStorage[lastDate];
+                let totalCash = 0, totalDebit = 0, totalQRIS = 0, totalKeluar = 0;
+                (dayData.transactions || []).forEach(tx => {
+                    if (tx.type === 'pemasukan') {
+                        if (tx.payMethod === 'Cash') totalCash += tx.amount;
+                        else if (tx.payMethod === 'Debit') totalDebit += tx.amount;
+                        else if (tx.payMethod === 'QRIS') totalQRIS += tx.amount;
+                    } else if (tx.type === 'pengeluaran') {
+                        totalKeluar += tx.amount;
+                    }
+                });
+                const totalMasuk = totalCash + totalDebit + totalQRIS;
+                return (dayData.saldoAwal || 0) + totalMasuk - totalQRIS - totalDebit - totalKeluar;
+            }
+            return 0;
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            loadFromLocalStorage();
+            document.getElementById('selectedDate').value = currentSelectedDate;
+            renderApp();
+        };
+
+        function changeDate(newDate) {
+            if (!newDate) return;
+            currentSelectedDate = newDate;
+            const dayState = getCurrentDayState();
+            document.getElementById('inputSaldoAwal').value = dayState.saldoAwal ? formatNumberWithDots(dayState.saldoAwal) : '';
+            document.getElementById('inputSetoran').value = dayState.setoranHariIni ? formatNumberWithDots(dayState.setoranHariIni) : '';
+            renderApp();
+        }
+
+        // --- LOCAL STORAGE MANAGER ---
+        function saveToLocalStorage() {
+            localStorage.setItem('buku_kas_global_storage', JSON.stringify(globalStorage));
+            localStorage.setItem('buku_kas_history_data', JSON.stringify(historyData));
+        }
+
+        function loadFromLocalStorage() {
+            const savedStorage = localStorage.getItem('buku_kas_global_storage');
+            const savedHistory = localStorage.getItem('buku_kas_history_data');
+            
+            if (savedStorage) {
+                try {
+                    globalStorage = JSON.parse(savedStorage);
+                } catch(e) {
+                    globalStorage = {};
+                }
+            }
+
+            if (savedHistory) {
+                try {
+                    historyData = JSON.parse(savedHistory);
+                } catch(e) {
+                    historyData = [];
+                }
+            }
+
+            const dayState = getCurrentDayState();
+            document.getElementById('inputSaldoAwal').value = dayState.saldoAwal ? formatNumberWithDots(dayState.saldoAwal) : '';
+            document.getElementById('inputSetoran').value = dayState.setoranHariIni ? formatNumberWithDots(dayState.setoranHariIni) : '';
+        }
+
+        // --- CALCULATIONS ---
+        function calculateSummary() {
+            const dayState = getCurrentDayState();
+
+            // Ambil nilai Saldo Awal langsung dari input box (parse dari string berformat ribuan)
+            const saldoAwalVal = parseFormattedNumber(document.getElementById('inputSaldoAwal').value);
+            dayState.saldoAwal = saldoAwalVal;
+
+            let totalCash = 0;
+            let totalDebit = 0;
+            let totalQRIS = 0;
+            let totalPengeluaran = 0;
+
+            (dayState.transactions || []).forEach(tx => {
+                if (tx.type === 'pemasukan') {
+                    if (tx.payMethod === 'Cash') totalCash += tx.amount;
+                    else if (tx.payMethod === 'Debit') totalDebit += tx.amount;
+                    else if (tx.payMethod === 'QRIS') totalQRIS += tx.amount;
+                } else if (tx.type === 'pengeluaran') {
+                    totalPengeluaran += tx.amount;
+                }
+            });
+
+            const totalPemasukan = totalCash + totalDebit + totalQRIS;
+            const saldoKas = totalPemasukan - totalPengeluaran;
+            const totalSaldo = saldoAwalVal + saldoKas;
+
+            const setoranVal = parseFormattedNumber(document.getElementById('inputSetoran').value);
+            dayState.setoranHariIni = setoranVal;
+
+            // Rumus Saldo Akhir Baru: Saldo Awal + Pemasukan - QRIS - Debit - Setoran Hari Ini
+            const saldoAkhir = saldoAwalVal + totalPemasukan - totalQRIS - totalDebit - setoranVal;
+
+            return {
+                saldoAwal: saldoAwalVal,
+                totalCash,
+                totalDebit,
+                totalQRIS,
+                totalPemasukan,
+                totalPengeluaran,
+                saldoKas,
+                totalSaldo,
+                setoranHariIni: setoranVal,
+                saldoAkhir
+            };
+        }
+
+        function handleSaldoAwalChange() {
+            updateCalculations();
+        }
+
+        // --- RENDER APP ---
+        function renderApp() {
+            const summary = calculateSummary();
+
+            document.getElementById('displayTotalCash').textContent = formatRupiah(summary.totalCash);
+            document.getElementById('displayTotalDebit').textContent = formatRupiah(summary.totalDebit);
+            document.getElementById('displayTotalQRIS').textContent = formatRupiah(summary.totalQRIS);
+            
+            document.getElementById('displayTotalPemasukan').textContent = '+ ' + formatRupiah(summary.totalPemasukan);
+            document.getElementById('displayTotalPengeluaran').textContent = '- ' + formatRupiah(summary.totalPengeluaran);
+            document.getElementById('displaySaldoKas').textContent = formatRupiah(summary.saldoKas);
+            document.getElementById('displayTotalSaldo').textContent = formatRupiah(summary.totalSaldo);
+            document.getElementById('displaySaldoAkhir').textContent = formatRupiah(summary.saldoAkhir);
+
+            renderTransactionList();
+            saveToLocalStorage();
+        }
+
+        function updateCalculations() {
+            renderApp();
+        }
+
+        // --- RENDER TRANSACTION LIST ---
+        function renderTransactionList() {
+            const container = document.getElementById('transactionList');
+            container.innerHTML = '';
+
+            const dayState = getCurrentDayState();
+            let filteredTx = dayState.transactions || [];
+
+            if (activeTab === 'masuk') {
+                filteredTx = filteredTx.filter(t => t.type === 'pemasukan');
+            } else if (activeTab === 'keluar') {
+                filteredTx = filteredTx.filter(t => t.type === 'pengeluaran');
+            }
+
+            document.getElementById('txCount').textContent = `${filteredTx.length} transaksi`;
+
+            if (filteredTx.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <i class="fa-regular fa-folder-open text-3xl mb-2 text-slate-300"></i>
+                        <p class="text-xs">Belum ada transaksi di tanggal ini</p>
+                    </div>
+                `;
+                return;
+            }
+
+            [...filteredTx].reverse().forEach((tx) => {
+                const isMasuk = tx.type === 'pemasukan';
+                const div = document.createElement('div');
+                div.className = "p-3 flex justify-between items-center hover:bg-slate-50 transition";
+                
+                let badgeMethod = '';
+                if (isMasuk) {
+                    let colorClass = tx.payMethod === 'Cash' ? 'bg-emerald-100 text-emerald-800' : 
+                                    (tx.payMethod === 'Debit' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800');
+                    badgeMethod = `<span class="text-[9px] px-1.5 py-0.5 rounded-md font-semibold ${colorClass}">${tx.payMethod}</span>`;
+                }
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs ${isMasuk ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}">
+                            <i class="fa-solid ${isMasuk ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-semibold text-xs text-slate-800">${isMasuk ? (tx.noTrx ? tx.noTrx : 'Pemasukan') : tx.keterangan}</span>
+                                ${badgeMethod}
+                            </div>
+                            <span class="text-[10px] text-slate-400 block">${tx.time}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="font-bold text-xs ${isMasuk ? 'text-emerald-600' : 'text-rose-600'} mr-1">
+                            ${isMasuk ? '+' : '-'} ${formatRupiah(tx.amount)}
+                        </span>
+                        <button onclick="editTransaction('${tx.id}')" title="Edit Transaksi" class="text-slate-400 hover:text-blue-600 p-1.5 text-xs rounded-lg hover:bg-slate-100">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteTransaction('${tx.id}')" title="Hapus Transaksi" class="text-slate-400 hover:text-rose-500 p-1.5 text-xs rounded-lg hover:bg-slate-100">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- MODAL & FORM EDIT/ADD HANDLERS ---
+        function openFormModal(type, editId = null) {
+            document.getElementById('txType').value = type;
+            document.getElementById('editingTxId').value = editId || '';
+            const modalTitle = document.getElementById('modalTitle');
+            const pemasukanFields = document.getElementById('pemasukanFields');
+            const pengeluaranFields = document.getElementById('pengeluaranFields');
+            const btnSubmit = document.getElementById('btnSubmitForm');
+
+            if (type === 'pemasukan') {
+                modalTitle.textContent = editId ? 'Edit Pemasukan' : 'Tambah Pemasukan';
+                pemasukanFields.classList.remove('hidden');
+                pengeluaranFields.classList.add('hidden');
+                btnSubmit.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold shadow-md transition";
+            } else {
+                modalTitle.textContent = editId ? 'Edit Pengeluaran' : 'Tambah Pengeluaran';
+                pemasukanFields.classList.add('hidden');
+                pengeluaranFields.classList.remove('hidden');
+                btnSubmit.className = "w-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl text-xs font-bold shadow-md transition";
+            }
+
+            document.getElementById('formModal').classList.remove('hidden');
+        }
+
+        function closeFormModal() {
+            document.getElementById('formModal').classList.add('hidden');
+            document.getElementById('txForm').reset();
+            document.getElementById('editingTxId').value = '';
+        }
+
+        function editTransaction(id) {
+            const dayState = getCurrentDayState();
+            const tx = (dayState.transactions || []).find(t => t.id === id);
+            if (!tx) return;
+
+            openFormModal(tx.type, tx.id);
+
+            if (tx.type === 'pemasukan') {
+                const radio = document.querySelector(`input[name="payType"][value="${tx.payMethod}"]`);
+                if (radio) radio.checked = true;
+                document.getElementById('inputNoTrx').value = tx.noTrx || '';
+                document.getElementById('inputNominalPemasukan').value = formatNumberWithDots(tx.amount);
+            } else {
+                document.getElementById('inputKeteranganPengeluaran').value = tx.keterangan || '';
+                document.getElementById('inputNominalPengeluaran').value = formatNumberWithDots(tx.amount);
+            }
+        }
+
+        function handleSaveTransaction(e) {
+            e.preventDefault();
+            const type = document.getElementById('txType').value;
+            const editId = document.getElementById('editingTxId').value;
+            const dayState = getCurrentDayState();
+
+            if (type === 'pemasukan') {
+                const payMethod = document.querySelector('input[name="payType"]:checked').value;
+                const noTrx = document.getElementById('inputNoTrx').value.trim().toUpperCase();
+                const amount = parseFormattedNumber(document.getElementById('inputNominalPemasukan').value);
+
+                if (isNaN(amount) || amount <= 0) {
+                    showToast("Masukkan nominal pemasukan yang valid!", "error");
+                    return;
+                }
+
+                if (editId) {
+                    // Update Exisiting
+                    const index = dayState.transactions.findIndex(t => t.id === editId);
+                    if (index !== -1) {
+                        dayState.transactions[index].payMethod = payMethod;
+                        dayState.transactions[index].noTrx = noTrx || 'PEMASUKAN CASH/DEBIT/QRIS';
+                        dayState.transactions[index].amount = amount;
+                    }
+                } else {
+                    // Add New
+                    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    dayState.transactions.push({
+                        id: 'tx_' + Date.now(),
+                        type: 'pemasukan',
+                        payMethod,
+                        noTrx: noTrx || 'PEMASUKAN CASH/DEBIT/QRIS',
+                        amount,
+                        time: timeStr
+                    });
+                }
+
+            } else {
+                const keterangan = document.getElementById('inputKeteranganPengeluaran').value.trim().toUpperCase();
+                const amount = parseFormattedNumber(document.getElementById('inputNominalPengeluaran').value);
+
+                if (!keterangan) {
+                    showToast("Keterangan pengeluaran tidak boleh kosong!", "error");
+                    return;
+                }
+                if (isNaN(amount) || amount <= 0) {
+                    showToast("Masukkan nominal pengeluaran yang valid!", "error");
+                    return;
+                }
+
+                if (editId) {
+                    // Update Existing
+                    const index = dayState.transactions.findIndex(t => t.id === editId);
+                    if (index !== -1) {
+                        dayState.transactions[index].keterangan = keterangan;
+                        dayState.transactions[index].amount = amount;
+                    }
+                } else {
+                    // Add New
+                    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    dayState.transactions.push({
+                        id: 'tx_' + Date.now(),
+                        type: 'pengeluaran',
+                        keterangan,
+                        amount,
+                        time: timeStr
+                    });
+                }
+            }
+
+            closeFormModal();
+            renderApp();
+            showToast(editId ? "Transaksi diperbarui!" : "Transaksi berhasil disimpan!");
+        }
+
+        function deleteTransaction(id) {
+            if (confirm("Hapus transaksi ini?")) {
+                const dayState = getCurrentDayState();
+                dayState.transactions = dayState.transactions.filter(t => t.id !== id);
+                renderApp();
+                showToast("Transaksi berhasil dihapus");
+            }
+        }
+
+        function promptEditSaldoAwal() {
+            const dayState = getCurrentDayState();
+            const input = prompt("Masukkan Nilai Saldo Awal Baru (Rp):", dayState.saldoAwal || 0);
+            if (input !== null) {
+                const val = parseFloat(input);
+                if (!isNaN(val) && val >= 0) {
+                    dayState.saldoAwal = val;
+                    renderApp();
+                    showToast("Saldo awal diperbarui");
+                } else {
+                    showToast("Input saldo tidak valid", "error");
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('tabAll').className = tab === 'all' ? 'flex-1 py-1.5 rounded-lg bg-white shadow-sm text-slate-800' : 'flex-1 py-1.5 rounded-lg';
+            document.getElementById('tabMasuk').className = tab === 'masuk' ? 'flex-1 py-1.5 rounded-lg bg-white shadow-sm text-emerald-700' : 'flex-1 py-1.5 rounded-lg';
+            document.getElementById('tabKeluar').className = tab === 'keluar' ? 'flex-1 py-1.5 rounded-lg bg-white shadow-sm text-rose-700' : 'flex-1 py-1.5 rounded-lg';
+            renderTransactionList();
+        }
+
+        // --- DAILY ROLLOVER / TUTUP KAS ---
+        function confirmCloseDay() {
+            const summary = calculateSummary();
+            const message = `Yakin ingin menutup kas untuk tanggal ${currentSelectedDate}?\n\n- Saldo Akhir saat ini: ${formatRupiah(summary.saldoAkhir)}\n\nSaldo Akhir ini akan disiapkan sebagai Saldo Awal untuk hari berikutnya.`;
+
+            if (confirm(message)) {
+                // Formatting date for display
+                const dateObj = new Date(currentSelectedDate);
+                const dateFormatted = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                
+                const historyEntry = {
+                    date: dateFormatted,
+                    rawDate: currentSelectedDate,
+                    saldoAwal: summary.saldoAwal,
+                    totalPemasukan: summary.totalPemasukan,
+                    totalPengeluaran: summary.totalPengeluaran,
+                    setoran: summary.setoranHariIni,
+                    saldoAkhir: summary.saldoAkhir
+                };
+
+                // Avoid duplicates in history
+                historyData = historyData.filter(h => h.rawDate !== currentSelectedDate);
+                historyData.unshift(historyEntry);
+
+                // Auto-create next day with updated saldo awal
+                const nextDay = new Date(dateObj);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const nextDayStr = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, '0')}-${String(nextDay.getDate()).padStart(2, '0')}`;
+                
+                if (!globalStorage[nextDayStr]) {
+                    globalStorage[nextDayStr] = {
+                        saldoAwal: summary.saldoAkhir,
+                        setoranHariIni: 0,
+                        transactions: []
+                    };
+                } else {
+                    globalStorage[nextDayStr].saldoAwal = summary.saldoAkhir;
+                }
+
+                saveToLocalStorage();
+                showToast("Kas tanggal ini berhasil ditutup!");
+            }
+        }
+
+        // --- WHATSAPP REPORT GENERATOR ---
+        function sendToWhatsApp() {
+            const summary = calculateSummary();
+            const dayState = getCurrentDayState();
+            const [yyyy, mm, dd] = currentSelectedDate.split('-');
+            const dateObj = new Date(yyyy, mm - 1, dd);
+            const dateStr = dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            let rincianMasuk = "";
+            let rincianKeluar = "";
+
+            const txMasuk = (dayState.transactions || []).filter(t => t.type === 'pemasukan');
+            const txKeluar = (dayState.transactions || []).filter(t => t.type === 'pengeluaran');
+
+            if (txMasuk.length > 0) {
+                txMasuk.forEach((t, index) => {
+                    rincianMasuk += `  ${index + 1}. [${t.time}] ${t.noTrx} (${t.payMethod}) : ${formatRupiah(t.amount)}\n`;
+                });
+            } else {
+                rincianMasuk = "  • (Tidak ada transaksi pemasukan)\n";
+            }
+
+            if (txKeluar.length > 0) {
+                txKeluar.forEach((t, index) => {
+                    rincianKeluar += `  ${index + 1}. [${t.time}] ${t.keterangan} : ${formatRupiah(t.amount)}\n`;
+                });
+            } else {
+                rincianKeluar = "  • (Tidak ada transaksi pengeluaran)\n";
+            }
+
+            const textReport = 
+`*📊 LAPORAN BUKU KAS HARIAN*
+📅 *Hari & Tanggal:* ${dateStr}
+
+----------------------------------------
+💵 *Saldo Awal:* ${formatRupiah(summary.saldoAwal)}
+
+*📥 RINGKASAN PEMASUKAN:*
+• Cash   : ${formatRupiah(summary.totalCash)}
+• Debit  : ${formatRupiah(summary.totalDebit)}
+• QRIS   : ${formatRupiah(summary.totalQRIS)}
+----------------------------------------
+*Total Pemasukan:* ${formatRupiah(summary.totalPemasukan)}
+
+*📤 RINGKASAN PENGELUARAN:*
+*Total Pengeluaran:* ${formatRupiah(summary.totalPengeluaran)}
+
+----------------------------------------
+💰 *Saldo Kas (Masuk - Keluar):* ${formatRupiah(summary.saldoKas)}
+📈 *Total Saldo (Awal + Kas):* ${formatRupiah(summary.totalSaldo)}
+🏦 *Setoran Hari Ini:* ${formatRupiah(summary.setoranHariIni)}
+
+----------------------------------------
+🏆 *SALDO AKHIR:* ${formatRupiah(summary.saldoAkhir)}
+_(Rumus: Saldo Awal + Pemasukan - QRIS - Debit - Setoran Hari Ini)_
+
+========================================
+*📝 RINCIAN TRANSAKSI HARIAN*
+
+*📥 Pemasukan (${txMasuk.length}):*
+${rincianMasuk}
+*📤 Pengeluaran (${txKeluar.length}):*
+${rincianKeluar}
+========================================
+_Dicetak otomatis via Aplikasi Buku Kas Harian_`;
+
+            const encodedText = encodeURIComponent(textReport);
+            const waUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+            window.open(waUrl, '_blank');
+        }
+
+        // --- HISTORY MODAL ---
+        function openHistoryModal() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+
+            if (!historyData || historyData.length === 0) {
+                list.innerHTML = `<div class="text-center text-slate-400 py-6 text-xs">Belum ada riwayat penutupan kas.</div>`;
+            } else {
+                historyData.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1 cursor-pointer hover:bg-slate-100 transition";
+                    div.onclick = function() {
+                        if (item.rawDate) {
+                            document.getElementById('selectedDate').value = item.rawDate;
+                            changeDate(item.rawDate);
+                            closeHistoryModal();
+                        }
+                    };
+                    div.innerHTML = `
+                        <div class="flex justify-between font-bold text-slate-800 border-b border-slate-200 pb-1">
+                            <span>📅 ${item.date}</span>
+                            <span class="text-emerald-700">Akhir: ${formatRupiah(item.saldoAkhir)}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
+                            <div>Saldo Awal: <b>${formatRupiah(item.saldoAwal)}</b></div>
+                            <div>Pemasukan: <b class="text-emerald-600">${formatRupiah(item.totalPemasukan)}</b></div>
+                            <div>Pengeluaran: <b class="text-rose-600">${formatRupiah(item.totalPengeluaran)}</b></div>
+                            <div>Setoran: <b>${formatRupiah(item.setoran)}</b></div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        // --- RESET DATA ---
+        function confirmResetAll() {
+            if (confirm("Apakah Anda yakin ingin MENGHAPUS SELURUH DATA transaksi di tanggal ini?")) {
+                delete globalStorage[currentSelectedDate];
+                document.getElementById('inputSetoran').value = '';
+                renderApp();
+                showToast("Data tanggal ini telah di-reset");
+            }
+        }
+
+        // --- UTILS ---
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(angka || 0);
+        }
+
+        // Automatic Digit Grouping Helper Functions
+        function formatNumberWithDots(number) {
+            if (number === null || number === undefined || isNaN(number) || number === '') return '';
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function parseFormattedNumber(str) {
+            if (!str) return 0;
+            const cleanStr = str.toString().replace(/\./g, '').replace(/[^0-9]/g, '');
+            return parseFloat(cleanStr) || 0;
+        }
+
+        function formatInputRupiah(inputEl) {
+            let cursorPosition = inputEl.selectionStart;
+            let originalLength = inputEl.value.length;
+
+            let rawVal = inputEl.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+            if (!rawVal) {
+                inputEl.value = '';
+                return;
+            }
+
+            let formattedVal = formatNumberWithDots(rawVal);
+            inputEl.value = formattedVal;
+
+            // Maintain correct cursor position after adding dots
+            let newLength = formattedVal.length;
+            cursorPosition = cursorPosition + (newLength - originalLength);
+            if (cursorPosition >= 0) {
+                inputEl.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.textContent = message;
+            if (type === 'error') {
+                toastIcon.className = "fa-solid fa-circle-exclamation text-rose-400";
+            } else {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400";
+            }
+
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
