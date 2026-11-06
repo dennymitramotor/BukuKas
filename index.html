@@ -526,9 +526,6 @@
             });
         }
 
-        // ==========================================
-        // FUNGSI BERSIHKAN DATA HARI INI
-        // ==========================================
         function bersihkanDataHariIni() {
             Swal.fire({
                 title: 'Bersihkan Data Hari Ini?',
@@ -561,6 +558,7 @@
 
         // =========================================================
         // KIRIM LAPORAN KE GOOGLE SHEET & WHATSAPP SAAT TOMBOL DIKLIK
+        // (Urutan payload persis dengan urutan kolom Google Sheet Anda)
         // =========================================================
         function konfirmasiDanKirimWhatsApp() {
             Swal.fire({
@@ -576,10 +574,12 @@
                 if (result.isConfirmed) {
                     let tgl = datePicker.value;
                     let calc = hitungOtomatis();
+                    
                     let dataPayload = {
                         tanggal: tgl,
                         saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
                         noTransaksi: "LAPORAN-HARIAN",
+                        setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
                         pemasukanCash: calc.totalCash,
                         pemasukanDebit: calc.totalDebit,
                         pemasukanQris: calc.totalQris,
@@ -588,9 +588,9 @@
                         jumlahPengeluaran: calc.totalPengeluaran,
                         saldoKas: calc.saldoKas,
                         totalSaldo: calc.totalSaldo,
-                        setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
                         saldoAkhir: calc.saldoAkhir
                     };
+                    
                     kirimKeGoogleSheet(dataPayload);
                     eksekusiKirimWhatsApp();
                 }
