@@ -158,6 +158,21 @@
     </div>
 
     <script>
+        // ==========================================
+        // INTEGRASI GOOGLE APPS SCRIPT (WEB APP URL)
+        // ==========================================
+        const WEB_APP_URL = https://script.google.com/macros/s/AKfycbw7KdC4HUB3GsnMjnppU_yuqC5weq4vjSKgH_twGV6DiraMLYqCVqgkNckjV0QSNo8-ag/exec; // Ganti dengan URL /exec Anda
+
+        function kirimKeGoogleSheet(dataPayload) {
+            if (!WEB_APP_URL.includes("script.google.com")) return; // Lewati jika belum diisi
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dataPayload)
+            }).catch(err => console.error("Sync error:", err));
+        }
+
         // Inisialisasi Tanggal Hari Ini
         const todayStr = new Date().toISOString().split('T')[0];
         const datePicker = document.getElementById('selectedDate');
@@ -292,7 +307,7 @@
             document.getElementById('lblTotalSaldo').innerText = formatRupiah(totalSaldo);
             document.getElementById('lblSaldoAkhir').innerText = formatRupiah(saldoAkhir);
 
-            return { saldoAkhir, totalCash, totalDebit, totalQris, totalPengeluaran, totalPemasukan };
+            return { saldoAkhir, totalCash, totalDebit, totalQris, totalPengeluaran, totalPemasukan, saldoKas, totalSaldo };
         }
 
         function renderTabel(transaksiList) {
@@ -350,9 +365,7 @@
                 document.getElementById('pNominal').value = '';
             }
             document.getElementById('modalPemasukan').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('pNoTransaksi').focus();
-            }, 100);
+            setTimeout(() => { document.getElementById('pNoTransaksi').focus(); }, 100);
         }
 
         function bukaModalPengeluaran(isEdit = false) {
@@ -363,9 +376,7 @@
                 document.getElementById('eJumlah').value = '';
             }
             document.getElementById('modalPengeluaran').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('eKeterangan').focus();
-            }, 100);
+            setTimeout(() => { document.getElementById('eKeterangan').focus(); }, 100);
         }
 
         function tutupModal(id) {
@@ -417,6 +428,25 @@
             saveDatabase(db);
             tutupModal('modalPemasukan');
             muatDataHariIni();
+
+            // KIRIM DATA KE GOOGLE SHEET
+            let calc = hitungOtomatis();
+            let dataPayload = {
+                tanggal: tgl,
+                saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
+                noTransaksi: noTrx,
+                pemasukanCash: metode === 'Cash' ? nominal : 0,
+                pemasukanDebit: metode === 'Debit' ? nominal : 0,
+                pemasukanQris: metode === 'QRIS' ? nominal : 0,
+                totalPemasukan: calc.totalPemasukan,
+                keteranganPengeluaran: "-",
+                jumlahPengeluaran: 0,
+                saldoKas: calc.saldoKas,
+                totalSaldo: calc.totalSaldo,
+                setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
+                saldoAkhir: calc.saldoAkhir
+            };
+            kirimKeGoogleSheet(dataPayload);
         }
 
         function simpanPengeluaran() {
@@ -461,6 +491,25 @@
             saveDatabase(db);
             tutupModal('modalPengeluaran');
             muatDataHariIni();
+
+            // KIRIM DATA KE GOOGLE SHEET
+            let calc = hitungOtomatis();
+            let dataPayload = {
+                tanggal: tgl,
+                saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
+                noTransaksi: "-",
+                pemasukanCash: 0,
+                pemasukanDebit: 0,
+                pemasukanQris: 0,
+                totalPemasukan: calc.totalPemasukan,
+                keteranganPengeluaran: ket,
+                jumlahPengeluaran: jumlah,
+                saldoKas: calc.saldoKas,
+                totalSaldo: calc.totalSaldo,
+                setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
+                saldoAkhir: calc.saldoAkhir
+            };
+            kirimKeGoogleSheet(dataPayload);
         }
 
         function editItem(index, tipe) {
