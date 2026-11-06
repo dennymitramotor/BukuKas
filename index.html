@@ -58,7 +58,7 @@
                     <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Setoran Hari Ini</span>
                     <input type="text" id="inputSetoran" placeholder="0" class="w-36 text-right text-sm font-bold text-slate-700 bg-slate-50 border border-slate-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500">
                 </div>
-                <button onclick="kirimWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2 px-3 rounded-lg shadow transition flex items-center justify-center space-x-1.5">
+                <button onclick="konfirmasiDanKirimWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2 px-3 rounded-lg shadow transition flex items-center justify-center space-x-1.5">
                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.183 0-5.767 2.584-5.767 5.767 0 1.01.263 1.961.722 2.784l-.766 2.798 2.868-.752c.79.431 1.708.679 2.683.679 3.183 0 5.767-2.585 5.767-5.767 0-3.183-2.584-5.767-5.767-5.767zm3.398 8.196c-.143.402-.832.747-1.149.789-.317.043-.687.063-1.11-.083-.263-.09-.597-.202-1.026-.395-1.523-.69-2.521-2.227-2.599-2.329-.077-.102-.622-.828-.622-1.579 0-.751.393-1.121.533-1.274.14-.153.306-.191.408-.191.102 0 .204.001.293.007.094.006.221-.036.347.266.128.303.435 1.059.474 1.136.038.077.064.166.013.268-.051.102-.077.166-.153.256-.076.09-.16.202-.23.271-.077.077-.157.161-.067.316.09.155.397.653.852 1.058.587.521 1.082.682 1.235.759.153.077.243.064.333-.039.09-.102.383-.447.485-.6.102-.153.204-.128.344-.077.14.051.892.421 1.045.498.153.077.255.115.293.179.038.064.038.371-.105.773z"/></svg>
                     <span>Kirim Laporan via WhatsApp</span>
                 </button>
@@ -102,6 +102,14 @@
                 </table>
             </div>
         </section>
+
+        <!-- Tombol Bersihkan Data di Paling Bawah -->
+        <div class="pt-2">
+            <button onclick="bersihkanDataHariIni()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center space-x-1">
+                <svg class="w-4 h-4 fill-current text-slate-600" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                <span>Bersihkan Data Hari Ini</span>
+            </button>
+        </div>
 
     </main>
 
@@ -159,12 +167,12 @@
 
     <script>
         // ==========================================
-        // INTEGRASI GOOGLE APPS SCRIPT (WEB APP URL)
+        // URL GOOGLE APPS SCRIPT WEB APP ANDA
         // ==========================================
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw7KdC4HUB3GsnMjnppU_yuqC5weq4vjSKgH_twGV6DiraMLYqCVqgkNckjV0QSNo8-ag/exec";
 
         function kirimKeGoogleSheet(dataPayload) {
-            if (!WEB_APP_URL.includes("script.google.com")) return; // Lewati jika belum diisi
+            if (!WEB_APP_URL.includes("script.google.com")) return;
             fetch(WEB_APP_URL, {
                 method: "POST",
                 mode: "no-cors",
@@ -428,25 +436,6 @@
             saveDatabase(db);
             tutupModal('modalPemasukan');
             muatDataHariIni();
-
-            // KIRIM DATA KE GOOGLE SHEET
-            let calc = hitungOtomatis();
-            let dataPayload = {
-                tanggal: tgl,
-                saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
-                noTransaksi: noTrx,
-                pemasukanCash: metode === 'Cash' ? nominal : 0,
-                pemasukanDebit: metode === 'Debit' ? nominal : 0,
-                pemasukanQris: metode === 'QRIS' ? nominal : 0,
-                totalPemasukan: calc.totalPemasukan,
-                keteranganPengeluaran: "-",
-                jumlahPengeluaran: 0,
-                saldoKas: calc.saldoKas,
-                totalSaldo: calc.totalSaldo,
-                setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
-                saldoAkhir: calc.saldoAkhir
-            };
-            kirimKeGoogleSheet(dataPayload);
         }
 
         function simpanPengeluaran() {
@@ -491,25 +480,6 @@
             saveDatabase(db);
             tutupModal('modalPengeluaran');
             muatDataHariIni();
-
-            // KIRIM DATA KE GOOGLE SHEET
-            let calc = hitungOtomatis();
-            let dataPayload = {
-                tanggal: tgl,
-                saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
-                noTransaksi: "-",
-                pemasukanCash: 0,
-                pemasukanDebit: 0,
-                pemasukanQris: 0,
-                totalPemasukan: calc.totalPemasukan,
-                keteranganPengeluaran: ket,
-                jumlahPengeluaran: jumlah,
-                saldoKas: calc.saldoKas,
-                totalSaldo: calc.totalSaldo,
-                setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
-                saldoAkhir: calc.saldoAkhir
-            };
-            kirimKeGoogleSheet(dataPayload);
         }
 
         function editItem(index, tipe) {
@@ -556,7 +526,78 @@
             });
         }
 
-        function kirimWhatsApp() {
+        // ==========================================
+        // FUNGSI BERSIHKAN DATA HARI INI
+        // ==========================================
+        function bersihkanDataHariIni() {
+            Swal.fire({
+                title: 'Bersihkan Data Hari Ini?',
+                text: "Semua input transaksi, saldo awal, dan setoran pada tanggal ini akan dikosongkan.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Bersihkan',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let tgl = datePicker.value;
+                    let db = getDatabase();
+                    if (db[tgl]) {
+                        delete db[tgl];
+                        saveDatabase(db);
+                    }
+                    muatDataHariIni();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: 'Data hari ini telah dibersihkan.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        // =========================================================
+        // KIRIM LAPORAN KE GOOGLE SHEET & WHATSAPP SAAT TOMBOL DIKLIK
+        // =========================================================
+        function konfirmasiDanKirimWhatsApp() {
+            Swal.fire({
+                title: 'Kirim Laporan Kas?',
+                text: "Pastikan data yang diinput sudah benar. Lanjutkan untuk mengirim ke Google Sheet & WhatsApp?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let tgl = datePicker.value;
+                    let calc = hitungOtomatis();
+                    let dataPayload = {
+                        tanggal: tgl,
+                        saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
+                        noTransaksi: "LAPORAN-HARIAN",
+                        pemasukanCash: calc.totalCash,
+                        pemasukanDebit: calc.totalDebit,
+                        pemasukanQris: calc.totalQris,
+                        totalPemasukan: calc.totalPemasukan,
+                        keteranganPengeluaran: "TOTAL PENGELUARAN",
+                        jumlahPengeluaran: calc.totalPengeluaran,
+                        saldoKas: calc.saldoKas,
+                        totalSaldo: calc.totalSaldo,
+                        setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
+                        saldoAkhir: calc.saldoAkhir
+                    };
+                    kirimKeGoogleSheet(dataPayload);
+                    eksekusiKirimWhatsApp();
+                }
+            });
+        }
+
+        function eksekusiKirimWhatsApp() {
             let tgl = datePicker.value;
             let data = getDataTanggal(tgl);
             let calc = hitungOtomatis();
