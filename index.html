@@ -39,13 +39,18 @@
                 <span>- Debit: <span id="lblDebit" class="text-slate-700 font-medium">Rp 0</span></span>
                 <span>- QRIS: <span id="lblQris" class="text-slate-700 font-medium">Rp 0</span></span>
             </div>
+            <!-- Tampilan Total Non Tunai (QRIS + Debit) -->
+            <div class="flex justify-between text-xs text-indigo-600 font-medium pl-2 bg-indigo-50/50 py-1 rounded">
+                <span>Total Non Tunai (QRIS + Debit)</span>
+                <span id="lblTotalNonTunai">Rp 0</span>
+            </div>
             <div class="flex justify-between text-sm">
                 <span class="text-slate-600">Total Pengeluaran</span>
                 <span id="lblTotalPengeluaran" class="font-semibold text-rose-600">Rp 0</span>
             </div>
             <div class="border-t border-slate-100 pt-2 flex justify-between text-sm">
-                <span class="text-slate-700 font-medium">Saldo Kas</span>
-                <span id="lbl" class="font-bold text-blue-600">Rp 0</span>
+                <span class="text-slate-700 font-medium">Saldo Kas (Cash - Pengeluaran)</span>
+                <span id="lblSaldoKas" class="font-bold text-blue-600">Rp 0</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span class="text-slate-700 font-medium">Total Saldo (Awal + Kas)</span>
@@ -66,7 +71,7 @@
 
             <!-- Saldo Akhir -->
             <div class="border-t border-slate-200 pt-2 flex justify-between text-base font-bold bg-slate-50 p-2 rounded">
-                <span class="text-slate-800">Saldo Akhir</span>
+                <span class="text-slate-800">Saldo Akhir (Total Saldo - Setoran)</span>
                 <span id="lblSaldoAkhir" class="text-blue-700">Rp 0</span>
             </div>
         </section>
@@ -302,22 +307,22 @@
                 });
             }
 
-            // Perhitungan Saldo Kas sesuai permintaan: Total Pemasukan (Cash - Debit - QRIS) + Total Pengeluaran
-            // Atau Total Cash - Debit - QRIS + Total Pengeluaran
-            let saldoKas = totalCash - totalDebit - totalQris + totalPengeluaran;
+            let totalNonTunai = totalQris + totalDebit;
+            let saldoKas = totalCash - totalPengeluaran;
             let totalSaldo = saldoAwal + saldoKas;
-            let saldoAkhir = saldoAwal + totalCash - totalQris - totalDebit - setoran;
+            let saldoAkhir = totalSaldo - setoran;
 
             document.getElementById('lblTotalPemasukan').innerText = formatRupiah(totalPemasukan);
             document.getElementById('lblCash').innerText = formatRupiah(totalCash);
             document.getElementById('lblDebit').innerText = formatRupiah(totalDebit);
             document.getElementById('lblQris').innerText = formatRupiah(totalQris);
+            document.getElementById('lblTotalNonTunai').innerText = formatRupiah(totalNonTunai);
             document.getElementById('lblTotalPengeluaran').innerText = formatRupiah(totalPengeluaran);
             document.getElementById('lblSaldoKas').innerText = formatRupiah(saldoKas);
             document.getElementById('lblTotalSaldo').innerText = formatRupiah(totalSaldo);
             document.getElementById('lblSaldoAkhir').innerText = formatRupiah(saldoAkhir);
 
-            return { saldoAkhir, totalCash, totalDebit, totalQris, totalPengeluaran, totalPemasukan, saldoKas, totalSaldo };
+            return { saldoAkhir, totalCash, totalDebit, totalQris, totalNonTunai, totalPengeluaran, totalPemasukan, saldoKas, totalSaldo };
         }
 
         function renderTabel(transaksiList) {
@@ -611,9 +616,10 @@
             pesan += `  - Cash: ${formatRupiah(calc.totalCash)}\n`;
             pesan += `  - Debit: ${formatRupiah(calc.totalDebit)}\n`;
             pesan += `  - QRIS: ${formatRupiah(calc.totalQris)}\n`;
+            pesan += `  - Non Tunai (QRIS+Debit): ${formatRupiah(calc.totalNonTunai)}\n`;
             pesan += `• Total Pengeluaran: ${formatRupiah(calc.totalPengeluaran)}\n`;
             pesan += `• Saldo Kas: ${formatRupiah(calc.saldoKas)}\n`;
-            pesan += `• Total Saldo (Awal+Kas): ${formatRupiah(saldoAwal + calc.saldoKas)}\n`;
+            pesan += `• Total Saldo (Awal+Kas): ${formatRupiah(calc.totalSaldo)}\n`;
             pesan += `• Setoran Hari Ini: ${formatRupiah(setoran)}\n`;
             pesan += `• *Saldo Akhir: ${formatRupiah(calc.saldoAkhir)}*\n\n`;
 
@@ -630,8 +636,8 @@
                 });
             }
 
-            let encodedPesa = encodeURIComponent(pesan);
-            window.open(`https://wa.me/?text=${encodedPesa}`, '_blank');
+            let encodedPesan = encodeURIComponent(pesan);
+            window.open(`https://wa.me/?text=${encodedPesan}`, '_blank');
         }
 
         muatDataHariIni();
