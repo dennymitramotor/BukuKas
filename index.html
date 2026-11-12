@@ -304,7 +304,9 @@
 
             let saldoKas = totalPemasukan - totalPengeluaran;
             let totalSaldo = saldoAwal + saldoKas;
-            let saldoAkhir = saldoAwal + totalPemasukan - totalQris - totalDebit - setoran;
+            
+            // Rumus Saldo Akhir: Saldo Awal + Total Cash - Total QRIS - Total Debit - Setoran Hari Ini
+            let saldoAkhir = saldoAwal + totalCash - totalQris - totalDebit - setoran;
 
             document.getElementById('lblTotalPemasukan').innerText = formatRupiah(totalPemasukan);
             document.getElementById('lblCash').innerText = formatRupiah(totalCash);
@@ -558,7 +560,6 @@
 
         // =========================================================
         // KIRIM LAPORAN KE GOOGLE SHEET & WHATSAPP SAAT TOMBOL DIKLIK
-        // (Urutan payload persis dengan urutan kolom Google Sheet Anda)
         // =========================================================
         function konfirmasiDanKirimWhatsApp() {
             Swal.fire({
