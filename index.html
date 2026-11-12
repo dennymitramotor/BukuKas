@@ -44,7 +44,7 @@
                 <span id="lblTotalPengeluaran" class="font-semibold text-rose-600">Rp 0</span>
             </div>
             <div class="border-t border-slate-100 pt-2 flex justify-between text-sm">
-                <span class="text-slate-700 font-medium">Saldo Kas (Masuk - Keluar)</span>
+                <span class="text-slate-700 font-medium">Saldo Kas</span>
                 <span id="lblSaldoKas" class="font-bold text-blue-600">Rp 0</span>
             </div>
             <div class="flex justify-between text-sm">
@@ -302,10 +302,10 @@
                 });
             }
 
-            let saldoKas = totalPemasukan - totalPengeluaran;
+            // Perhitungan Saldo Kas sesuai permintaan: Total Pemasukan (Cash - Debit - QRIS) + Total Pengeluaran
+            // Atau Total Cash - Debit - QRIS + Total Pengeluaran
+            let saldoKas = totalCash - totalDebit - totalQris + totalPengeluaran;
             let totalSaldo = saldoAwal + saldoKas;
-            
-            // Rumus Saldo Akhir: Saldo Awal + Total Cash - Total QRIS - Total Debit - Setoran Hari Ini
             let saldoAkhir = saldoAwal + totalCash - totalQris - totalDebit - setoran;
 
             document.getElementById('lblTotalPemasukan').innerText = formatRupiah(totalPemasukan);
@@ -558,9 +558,6 @@
             });
         }
 
-        // =========================================================
-        // KIRIM LAPORAN KE GOOGLE SHEET & WHATSAPP SAAT TOMBOL DIKLIK
-        // =========================================================
         function konfirmasiDanKirimWhatsApp() {
             Swal.fire({
                 title: 'Kirim Laporan Kas?',
@@ -615,8 +612,8 @@
             pesan += `  - Debit: ${formatRupiah(calc.totalDebit)}\n`;
             pesan += `  - QRIS: ${formatRupiah(calc.totalQris)}\n`;
             pesan += `• Total Pengeluaran: ${formatRupiah(calc.totalPengeluaran)}\n`;
-            pesan += `• Saldo Kas (Masuk-Keluar): ${formatRupiah(calc.totalPemasukan - calc.totalPengeluaran)}\n`;
-            pesan += `• Total Saldo (Awal+Kas): ${formatRupiah(saldoAwal + (calc.totalPemasukan - calc.totalPengeluaran))}\n`;
+            pesan += `• Saldo Kas: ${formatRupiah(calc.saldoKas)}\n`;
+            pesan += `• Total Saldo (Awal+Kas): ${formatRupiah(saldoAwal + calc.saldoKas)}\n`;
             pesan += `• Setoran Hari Ini: ${formatRupiah(setoran)}\n`;
             pesan += `• *Saldo Akhir: ${formatRupiah(calc.saldoAkhir)}*\n\n`;
 
@@ -633,8 +630,8 @@
                 });
             }
 
-            let encodedPesan = encodeURIComponent(pesan);
-            window.open(`https://wa.me/?text=${encodedPesan}`, '_blank');
+            let encodedPesa = encodeURIComponent(pesan);
+            window.open(`https://wa.me/?text=${encodedPesa}`, '_blank');
         }
 
         muatDataHariIni();
