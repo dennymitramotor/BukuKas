@@ -304,7 +304,7 @@
 
             // Perhitungan Saldo Kas sesuai permintaan: Total Pemasukan (Cash - Debit - QRIS) - Total Pengeluaran
             // Atau Total Cash - Debit - QRIS + Total Pengeluaran
-            let saldoKas = totalCash - totalDebit - totalQris - totalPengeluaran;
+            let saldoKas = totalCash - totalDebit - totalQris + totalPengeluaran;
             let totalSaldo = saldoAwal + saldoKas;
             let saldoAkhir = saldoAwal + totalCash - totalQris - totalDebit - setoran;
 
