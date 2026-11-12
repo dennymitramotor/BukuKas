@@ -564,41 +564,36 @@
         }
 
         function konfirmasiDanKirimWhatsApp() {
-            Swal.fire({
-                title: 'Kirim Laporan Kas?',
-                text: "Pastikan data yang diinput sudah benar. Lanjutkan untuk mengirim ke Google Sheet & WhatsApp?",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#16a34a',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Ya, Lanjutkan',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    let tgl = datePicker.value;
-                    let calc = hitungOtomatis();
-                    
-                    let dataPayload = {
-                        tanggal: tgl,
-                        saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
-                        noTransaksi: "LAPORAN-HARIAN",
-                        setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
-                        pemasukanCash: calc.totalCash,
-                        pemasukanDebit: calc.totalDebit,
-                        pemasukanQris: calc.totalQris,
-                        totalPemasukan: calc.totalPemasukan,
-                        keteranganPengeluaran: "TOTAL PENGELUARAN",
-                        jumlahPengeluaran: calc.totalPengeluaran,
-                        saldoKas: calc.saldoKas,
-                        totalSaldo: calc.totalSaldo,
-                        saldoAkhir: calc.saldoAkhir
-                    };
-                    
-                    kirimKeGoogleSheet(dataPayload);
-                    eksekusiKirimWhatsApp();
-                }
-            });
+    Swal.fire({
+        title: 'Kirim Laporan Kas?',
+        text: "Pastikan data sudah benar. Lanjutkan mengirim rincian ke Google Sheet & WhatsApp?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Ya, Lanjutkan',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let tgl = datePicker.value;
+            let data = getDataTanggal(tgl);
+            let calc = hitungOtomatis();
+            
+            let dataPayload = {
+                tanggal: tgl,
+                saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
+                setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
+                saldoKas: calc.saldoKas,
+                totalSaldo: calc.totalSaldo,
+                saldoAkhir: calc.saldoAkhir,
+                transaksi: data.transaksi || [] // Mengirim seluruh rincian transaksi harian
+            };
+            
+            kirimKeGoogleSheet(dataPayload);
+            eksekusiKirimWhatsApp();
         }
+    });
+}
 
         function eksekusiKirimWhatsApp() {
             let tgl = datePicker.value;
@@ -616,7 +611,7 @@
             pesan += `  - Cash: ${formatRupiah(calc.totalCash)}\n`;
             pesan += `  - Debit: ${formatRupiah(calc.totalDebit)}\n`;
             pesan += `  - QRIS: ${formatRupiah(calc.totalQris)}\n`;
-            pesan += `  - Non Tunai (QRIS+Debit): ${formatRupiah(calc.totalNonTunai)}\n`;
+            // pesan += `  - Non Tunai (QRIS+Debit): ${formatRupiah(calc.totalNonTunai)}\n`;
             pesan += `• Total Pengeluaran: ${formatRupiah(calc.totalPengeluaran)}\n`;
             pesan += `• Saldo Kas: ${formatRupiah(calc.saldoKas)}\n`;
             pesan += `• Total Saldo (Awal+Kas): ${formatRupiah(calc.totalSaldo)}\n`;
