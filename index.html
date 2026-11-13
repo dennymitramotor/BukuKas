@@ -174,17 +174,17 @@
         // ==========================================
         // URL GOOGLE APPS SCRIPT WEB APP ANDA
         // ==========================================
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx74TICdFD2jjM65jKIHn-LdffcM3vj1PKVq3HHLJECZAejswLiSQdHwL8qcUwiQUM0Ow/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxn-gowIQMYnLtNVKbtnFTwgz5qhhrB-FxDdh6xU0fzpASKxeW_884KqfRuZvTNANLL/exec";
 
         function kirimKeGoogleSheet(dataPayload) {
-            if (!WEB_APP_URL.includes("script.google.com")) return;
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(dataPayload)
-            }).catch(err => console.error("Sync error:", err));
-        }
+    if (!WEB_APP_URL.includes("script.google.com")) return;
+    fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(dataPayload)
+    }).catch(err => console.error("Sync error:", err));
+}
 
         // Inisialisasi Tanggal Hari Ini
         const todayStr = new Date().toISOString().split('T')[0];
