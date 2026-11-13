@@ -23,7 +23,7 @@
     </header>
 
     <main class="max-w-md mx-auto px-4 mt-4 space-y-4">
-        
+
         <!-- Ringkasan Saldo -->
         <section class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 space-y-3">
             <div class="flex justify-between items-center">
@@ -56,7 +56,7 @@
                 <span class="text-slate-700 font-medium">Total Saldo (Awal + Kas)</span>
                 <span id="lblTotalSaldo" class="font-bold text-indigo-600">Rp 0</span>
             </div>
-            
+
             <!-- Setoran Hari Ini + Tombol Kirim WA -->
             <div class="border-t border-slate-100 pt-3 space-y-2">
                 <div class="flex justify-between items-center">
@@ -108,8 +108,16 @@
             </div>
         </section>
 
-        <!-- Tombol Bersihkan Data di Paling Bawah -->
-        <div class="pt-2">
+        <!-- Tombol Riwayat, Muat, dan Bersihkan Data di Paling Bawah -->
+        <div class="pt-2 space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="bukaRiwayat()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition">
+                    📅 Riwayat
+                </button>
+                <button onclick="muatDariGoogleSheet()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition">
+                    Muat Tanggal Ini
+                </button>
+            </div>
             <button onclick="bersihkanDataHariIni()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold py-2.5 px-3 rounded-lg transition flex items-center justify-center space-x-1">
                 <svg class="w-4 h-4 fill-current text-slate-600" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 <span>Bersihkan Data Hari Ini</span>
@@ -170,21 +178,57 @@
         </div>
     </div>
 
+    <!-- Halaman Riwayat -->
+    <div id="modalRiwayat" class="fixed inset-0 bg-slate-100 z-50 hidden flex flex-col">
+        <div class="bg-blue-600 text-white shadow-md">
+            <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold">Riwayat Laporan</h2>
+                    <p class="text-xs text-blue-100">Data dari Google Sheet</p>
+                </div>
+                <button onclick="tutupModal('modalRiwayat')" class="bg-blue-700 hover:bg-blue-800 text-xs font-semibold px-3 py-1.5 rounded">Tutup</button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+            <div class="max-w-md mx-auto px-4 py-3 space-y-3">
+                <!-- Filter bulan -->
+                <div class="flex items-center space-x-2">
+                    <input type="month" id="filterBulan" class="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="semuaRiwayat()" class="text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg">Semua</button>
+                    <button onclick="bukaRiwayat()" class="text-xs font-semibold bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-2 rounded-lg">Refresh</button>
+                </div>
+
+                <!-- Total periode -->
+                <div class="bg-white rounded-xl border border-slate-200 p-3 text-sm space-y-1">
+                    <div class="flex justify-between"><span class="text-slate-500">Jumlah Hari</span><span id="rwHari" class="font-semibold">0</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Total Pemasukan</span><span id="rwMasuk" class="font-semibold text-emerald-600">Rp 0</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Total Pengeluaran</span><span id="rwKeluar" class="font-semibold text-rose-600">Rp 0</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Total Setoran</span><span id="rwSetoran" class="font-semibold text-indigo-600">Rp 0</span></div>
+                </div>
+
+                <!-- Daftar -->
+                <div id="listRiwayat" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==========================================
         // URL GOOGLE APPS SCRIPT WEB APP ANDA
+        // Ganti dengan URL hasil Deploy (berakhiran /exec)
         // ==========================================
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxn-gowIQMYnLtNVKbtnFTwgz5qhhrB-FxDdh6xU0fzpASKxeW_884KqfRuZvTNANLL/exec";
 
         function kirimKeGoogleSheet(dataPayload) {
-    if (!WEB_APP_URL.includes("script.google.com")) return;
-    fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(dataPayload)
-    }).catch(err => console.error("Sync error:", err));
-}
+            if (!WEB_APP_URL.includes("script.google.com")) return;
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(dataPayload)
+            }).catch(err => console.error("Sync error:", err));
+        }
 
         // Inisialisasi Tanggal Hari Ini
         const todayStr = new Date().toISOString().split('T')[0];
@@ -258,7 +302,7 @@
 
             document.getElementById('inputSaldoAwal').value = data.saldoAwal ? Number(data.saldoAwal).toLocaleString('id-ID') : '';
             document.getElementById('inputSetoran').value = data.setoran ? Number(data.setoran).toLocaleString('id-ID') : '';
-            
+
             renderTabel(data.transaksi);
             hitungOtomatis();
         }
@@ -271,7 +315,7 @@
             }
             db[tgl].saldoAwal = parseAngka(document.getElementById('inputSaldoAwal').value);
             db[tgl].setoran = parseAngka(document.getElementById('inputSetoran').value);
-            
+
             let calc = hitungOtomatis();
             db[tgl].saldoAkhir = calc.saldoAkhir;
 
@@ -564,36 +608,36 @@
         }
 
         function konfirmasiDanKirimWhatsApp() {
-    Swal.fire({
-        title: 'Kirim Laporan Kas?',
-        text: "Pastikan data sudah benar. Lanjutkan mengirim rincian ke Google Sheet & WhatsApp?",
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#16a34a',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Ya, Lanjutkan',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            let tgl = datePicker.value;
-            let data = getDataTanggal(tgl);
-            let calc = hitungOtomatis();
-            
-            let dataPayload = {
-                tanggal: tgl,
-                saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
-                setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
-                saldoKas: calc.saldoKas,
-                totalSaldo: calc.totalSaldo,
-                saldoAkhir: calc.saldoAkhir,
-                transaksi: data.transaksi || [] // Mengirim seluruh rincian transaksi harian
-            };
-            
-            kirimKeGoogleSheet(dataPayload);
-            eksekusiKirimWhatsApp();
+            Swal.fire({
+                title: 'Kirim Laporan Kas?',
+                text: "Pastikan data sudah benar. Lanjutkan mengirim rincian ke Google Sheet & WhatsApp?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let tgl = datePicker.value;
+                    let data = getDataTanggal(tgl);
+                    let calc = hitungOtomatis();
+
+                    let dataPayload = {
+                        tanggal: tgl,
+                        saldoAwal: parseAngka(document.getElementById('inputSaldoAwal').value),
+                        setoranHariIni: parseAngka(document.getElementById('inputSetoran').value),
+                        saldoKas: calc.saldoKas,
+                        totalSaldo: calc.totalSaldo,
+                        saldoAkhir: calc.saldoAkhir,
+                        transaksi: data.transaksi || [] // Mengirim seluruh rincian transaksi harian
+                    };
+
+                    kirimKeGoogleSheet(dataPayload);
+                    eksekusiKirimWhatsApp();
+                }
+            });
         }
-    });
-}
 
         function eksekusiKirimWhatsApp() {
             let tgl = datePicker.value;
@@ -604,7 +648,7 @@
 
             let pesan = `📊 *LAPORAN BUKU KAS HARIAN* 📊\n`;
             pesan += `📅 Tanggal: *${tgl}*\n\n`;
-            
+
             pesan += `💰 *RINGKASAN KEUANGAN:*\n`;
             pesan += `• Saldo Awal: ${formatRupiah(saldoAwal)}\n`;
             pesan += `• Total Pemasukan: ${formatRupiah(calc.totalPemasukan)}\n`;
@@ -635,6 +679,183 @@
             window.open(`https://wa.me/?text=${encodedPesan}`, '_blank');
         }
 
+        // ==========================================
+        // MUAT DATA DARI GOOGLE SHEET
+        // ==========================================
+
+        // Ambil detail 1 tanggal dari Sheet lalu simpan ke localStorage
+        async function ambilDanTerapkanDariSheet(tgl) {
+            if (!WEB_APP_URL.includes("script.google.com")) {
+                throw new Error('WEB_APP_URL belum diisi dengan URL Apps Script Anda.');
+            }
+            const res = await fetch(`${WEB_APP_URL}?aksi=data&tanggal=${tgl}`);
+            const hasil = await res.json();
+
+            if (hasil.status !== 'ok') throw new Error(hasil.pesan || 'Gagal membaca data');
+            if (!hasil.ada) return false;
+
+            let db = getDatabase();
+            db[tgl] = {
+                saldoAwal: hasil.saldoAwal,
+                setoran: hasil.setoran,
+                saldoAkhir: hasil.saldoAkhir,
+                transaksi: hasil.transaksi
+            };
+            saveDatabase(db);
+            return true;
+        }
+
+        // Tombol "Muat Tanggal Ini"
+        function muatDariGoogleSheet() {
+            let tgl = datePicker.value;
+            Swal.fire({
+                title: 'Muat dari Google Sheet?',
+                text: `Data tanggal ${tgl} di aplikasi ini akan diganti dengan data dari Google Sheet.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Muat',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (!result.isConfirmed) return;
+
+                Swal.fire({ title: 'Memuat data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                try {
+                    const berhasil = await ambilDanTerapkanDariSheet(tgl);
+                    if (!berhasil) {
+                        Swal.fire({ icon: 'info', title: 'Tidak ada data', text: `Belum ada laporan tanggal ${tgl} di Google Sheet.` });
+                        return;
+                    }
+                    muatDataHariIni();
+                    Swal.fire({ icon: 'success', title: 'Berhasil', text: 'Data berhasil dimuat dari Google Sheet.', timer: 1500, showConfirmButton: false });
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Gagal memuat', text: String(err) });
+                }
+            });
+        }
+
+        // ==========================================
+        // HALAMAN RIWAYAT
+        // ==========================================
+        let riwayatData = [];
+
+        document.getElementById('filterBulan').value = todayStr.slice(0, 7);
+        document.getElementById('filterBulan').addEventListener('change', renderRiwayat);
+
+        function semuaRiwayat() {
+            document.getElementById('filterBulan').value = '';
+            renderRiwayat();
+        }
+
+        async function bukaRiwayat() {
+            document.getElementById('modalRiwayat').classList.remove('hidden');
+
+            const list = document.getElementById('listRiwayat');
+            list.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">Memuat riwayat...</div>`;
+
+            try {
+                if (!WEB_APP_URL.includes("script.google.com")) {
+                    throw new Error('WEB_APP_URL belum diisi dengan URL Apps Script Anda.');
+                }
+                const res = await fetch(`${WEB_APP_URL}?aksi=riwayat`);
+                const hasil = await res.json();
+                if (hasil.status !== 'ok') throw new Error(hasil.pesan || 'Gagal membaca riwayat');
+                riwayatData = hasil.daftar || [];
+                renderRiwayat();
+            } catch (err) {
+                list.innerHTML = `<div class="text-center py-10 text-rose-500 text-xs">Gagal memuat riwayat.<br>${String(err)}</div>`;
+            }
+        }
+
+        function renderRiwayat() {
+            const bulan = document.getElementById('filterBulan').value; // format yyyy-mm
+            const data = riwayatData.filter(r => !bulan || r.tanggal.startsWith(bulan));
+
+            let tMasuk = 0, tKeluar = 0, tSetoran = 0;
+            data.forEach(r => {
+                tMasuk += r.totalPemasukan;
+                tKeluar += r.totalPengeluaran;
+                tSetoran += r.setoran;
+            });
+
+            document.getElementById('rwHari').innerText = data.length;
+            document.getElementById('rwMasuk').innerText = formatRupiah(tMasuk);
+            document.getElementById('rwKeluar').innerText = formatRupiah(tKeluar);
+            document.getElementById('rwSetoran').innerText = formatRupiah(tSetoran);
+
+            const list = document.getElementById('listRiwayat');
+            if (data.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 text-slate-400 text-xs">Tidak ada laporan pada periode ini.</div>`;
+                return;
+            }
+
+            list.innerHTML = data.map(r => {
+                const tglCantik = new Date(r.tanggal + 'T00:00:00').toLocaleDateString('id-ID', {
+                    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+                });
+                return `
+                <div class="bg-white rounded-xl border border-slate-200 p-3 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <div class="font-semibold text-sm text-slate-800">${tglCantik}</div>
+                        <button onclick="muatDariRiwayat('${r.tanggal}')" class="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg">Muat</button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                            <div class="text-slate-500">Pemasukan</div>
+                            <div class="font-semibold text-emerald-600">${formatRupiah(r.totalPemasukan)}</div>
+                        </div>
+                        <div>
+                            <div class="text-slate-500">Pengeluaran</div>
+                            <div class="font-semibold text-rose-600">${formatRupiah(r.totalPengeluaran)}</div>
+                        </div>
+                        <div>
+                            <div class="text-slate-500">Setoran</div>
+                            <div class="font-semibold text-indigo-600">${formatRupiah(r.setoran)}</div>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-slate-500">
+                        Cash ${formatRupiah(r.cash)} · Debit ${formatRupiah(r.debit)} · QRIS ${formatRupiah(r.qris)}
+                    </div>
+                    <div class="flex justify-between border-t border-slate-100 pt-2 text-sm">
+                        <span class="text-slate-600">Saldo Akhir</span>
+                        <span class="font-bold text-blue-700">${formatRupiah(r.saldoAkhir)}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function muatDariRiwayat(tgl) {
+            Swal.fire({
+                title: 'Muat tanggal ini?',
+                text: `Data tanggal ${tgl} di aplikasi akan diganti dengan data dari Google Sheet.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#4f46e5',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Muat',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (!result.isConfirmed) return;
+                Swal.fire({ title: 'Memuat data...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                try {
+                    const berhasil = await ambilDanTerapkanDariSheet(tgl);
+                    if (!berhasil) throw new Error('Data tanggal ini tidak ditemukan');
+
+                    datePicker.value = tgl;
+                    muatDataHariIni();
+                    tutupModal('modalRiwayat');
+
+                    Swal.fire({ icon: 'success', title: 'Berhasil', text: `Data ${tgl} berhasil dimuat.`, timer: 1500, showConfirmButton: false });
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Gagal memuat', text: String(err) });
+                }
+            });
+        }
+
+        // Mulai aplikasi
         muatDataHariIni();
     </script>
 </body>
