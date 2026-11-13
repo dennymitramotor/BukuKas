@@ -577,35 +577,35 @@
             });
         }
 
-        function bersihkanDataHariIni() {
-            Swal.fire({
-                title: 'Bersihkan Data Hari Ini?',
-                text: "Semua input transaksi, saldo awal, dan setoran pada tanggal ini akan dikosongkan.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e11d48',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Ya, Bersihkan',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    let tgl = datePicker.value;
-                    let db = getDatabase();
-                    if (db[tgl]) {
-                        delete db[tgl];
-                        saveDatabase(db);
-                    }
-                    muatDataHariIni();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil',
-                        text: 'Data hari ini telah dibersihkan.',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                }
-            });
-        }
+        //function bersihkanDataHariIni() {
+           // Swal.fire({
+             //   title: 'Bersihkan Data Hari Ini?',
+             //   text: "Semua input transaksi, saldo awal, dan setoran pada tanggal ini akan dikosongkan.",
+             //   icon: 'warning',
+             //   showCancelButton: true,
+             //   confirmButtonColor: '#e11d48',
+             //   cancelButtonColor: '#64748b',
+             //   confirmButtonText: 'Ya, Bersihkan',
+             //   cancelButtonText: 'Batal'
+          //  }).then((result) => {
+             //   if (result.isConfirmed) {
+             //       let tgl = datePicker.value;
+             //       let db = getDatabase();
+             //       if (db[tgl]) {
+             //           delete db[tgl];
+             //         saveDatabase(db);
+          //          }
+             //       muatDataHariIni();
+             //       Swal.fire({
+             //           icon: 'success',
+             //           title: 'Berhasil',
+             //           text: 'Data hari ini telah dibersihkan.',
+             //           timer: 1500,
+             //           showConfirmButton: false
+             //       });
+           //     }
+         //   });
+      //  }
 
         function konfirmasiDanKirimWhatsApp() {
             Swal.fire({
